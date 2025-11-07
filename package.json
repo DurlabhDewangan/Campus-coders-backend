@@ -1,0 +1,19 @@
+{
+  "name": "campus-coders-backend",
+  "version": "1.0.0",
+  "description": "campus coders backend ",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "social",
+    "media",
+    "platform",
+    "campus",
+    "coders",
+    "backend"
+  ],
+  "author": "Durlabh sagar dewangan",
+  "license": "ISC"
+}
