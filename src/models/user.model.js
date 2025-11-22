@@ -2,7 +2,6 @@ import mongoose, { Schema } from "mongoose";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 
-
 const userSchema = new Schema(
   {
     fullName: {
@@ -68,9 +67,29 @@ const userSchema = new Schema(
       trim: true,
     },
 
+    course: {
+      type: String,
+      enum: ["BCA", "BSc IT", "BSc CS", "PGDCA"],
+    },
+
+    year: {
+      type: String,
+      enum: ["1st Year", "2nd Year", "3rd Year"],
+    },
+
+    gender: {
+      type: String,
+      enum: ["male", "female", "other"],
+    },
+
     refreshToken: {
       type: String,
       default: "",
+    },
+
+    profileCompleted:{
+      type: Boolean,
+      default: false
     },
 
     role: {
@@ -97,7 +116,7 @@ userSchema.methods.isPasswordCorrect = async function (password) {
 };
 
 userSchema.methods.generateAccessToken = function () {
-  jwt.sign(
+  return jwt.sign(
     {
       _id: this._id,
       email: this.email,
@@ -108,7 +127,7 @@ userSchema.methods.generateAccessToken = function () {
   );
 };
 userSchema.methods.generateRefreshToken = function () {
-  jwt.sign(
+  return jwt.sign(
     {
       _id: this._id,
     },
@@ -118,4 +137,3 @@ userSchema.methods.generateRefreshToken = function () {
 };
 
 export const User = mongoose.model("User", userSchema);
- 

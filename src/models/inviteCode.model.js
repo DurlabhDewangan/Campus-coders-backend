@@ -28,4 +28,16 @@ const inviteCodeSchema = new Schema(
   { timestamps: true }
 );
 
-export default mongoose.model("InviteCode", inviteCodeSchema);
+export const generateInviteCode = function generateInviteCode() {
+  const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let code = "";
+
+  for (let i = 0; i < 10; i++) {
+    code += characters.charAt(Math.floor(Math.random() * characters.length));
+  }
+
+  return code;
+};  
+
+
+export const InviteCode = mongoose.model("InviteCode", inviteCodeSchema);

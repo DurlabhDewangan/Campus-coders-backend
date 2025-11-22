@@ -1,11 +1,11 @@
 import { Router } from "express";
-import { loginAdmin } from "../controllers/admin.controller";
-import { logoutAdmin } from "../controllers/admin.controller";
-import { verifyJWT } from "../middlewares/auth.middleware";
+import { loginAdmin, logout, inviteCodeGenerate} from "../controllers/admin.controller.js";
+import { verifyJWT } from "../middlewares/auth.middleware.js";
 
-const adminRouter = Router()
+export const adminRouter = Router()
 
-adminRouter.route("/api/v1/loginAdmin").post(loginAdmin)
+adminRouter.route("/login").post(loginAdmin)
 
 //authorized routes
-adminRouter.route("/api/v1/logoutAdmin").post(verifyJWT, logoutAdmin)
+adminRouter.route("/logout").post(verifyJWT, logout)
+adminRouter.route("/generateCode").post(verifyJWT, inviteCodeGenerate)

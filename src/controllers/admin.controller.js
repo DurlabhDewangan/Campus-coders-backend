@@ -2,18 +2,17 @@ import { User } from "../models/user.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import { generateInviteCode } from "../models/inviteCode.model.js";
+import { InviteCode } from "../models/inviteCode.model.js";
 
-const generateAccessAndRefreshToken = async (userId) => {
+export const generateAccessAndRefreshToken = async (userId) => {
   try {
     const admin = await User.findById(userId);
     const accessToken = admin.generateAccessToken();
-    console.log(accessToken);
     const refreshToken = admin.generateRefreshToken();
-    console.log(refreshToken);
 
     admin.refreshToken = refreshToken;
     const adminsave = await admin.save({ validateBeforeSave: false });
-    console.log("what is there on updating on field", adminsave);
 
     return { accessToken, refreshToken };
   } catch (error) {
@@ -50,14 +49,11 @@ export const loginAdmin = asyncHandler(async (req, res) => {
     throw new ApiError(400, "access denied, you are not an admin");
   }
 
-  console.log(admin);
   const passwordResult = await admin.isPasswordCorrect(password);
-
+  console.log(passwordResult);
   if (!passwordResult) {
     throw new ApiError(401, "Invalid password");
   }
-
-  console.log(passwordResult);
 
   const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
     admin._id,
@@ -89,9 +85,9 @@ export const loginAdmin = asyncHandler(async (req, res) => {
     );
 });
 
-export const logoutAdmin = asyncHandler(async (res, req) => {
+export const logout = asyncHandler(async (req, res) => {
   await User.findByIdAndUpdate(
-    req.admin._id,
+    req.admin,
     {
       $set: {
         refreshToken: undefined,
@@ -102,13 +98,51 @@ export const logoutAdmin = asyncHandler(async (res, req) => {
     },
   );
 
-    const options = {
+  const options = {
     httpOnly: true,
     secure: true,
   };
 
-  return res.status(200)
-  .clearCookie("accessToken", options)
-  .clearCookie("refreshToken", options).json(new ApiResponse(200, {}, "Admin logged out successfully"))
+  return res
+    .status(200)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .json(new ApiResponse(200, {}, " logged out successfully"));
+});
 
+export const inviteCodeGenerate = asyncHandler(async (req, res) => {
+  const admin = req.admin;
+  if (admin.role !== "admin") {
+    throw new ApiError(400, "anthorized request");
+  }
+  console.log("we are going to start generating code");
+  const invitecode = generateInviteCode();
+
+  console.log(invitecode);
+  console.log("this is the code");
+
+  const databaseInviteCode = await InviteCode.create({
+    code: invitecode,
+    createdBy: admin._id,
+  });
+
+  console.log(databaseInviteCode);
+
+  if (!databaseInviteCode) {
+    throw new ApiError(
+      500,
+      "something went wrong while storing the invite code in database",
+    );
+  }
+
+  const createdCode = await InviteCode.findById(databaseInviteCode.id).populate(
+    "createdBy", "fullName username",
+  );
+  console.log(createdCode);
+
+  res
+    .status(200)
+    .json(
+      new ApiResponse(200, createdCode, "invite code generated succesfully"),
+    );
 });
