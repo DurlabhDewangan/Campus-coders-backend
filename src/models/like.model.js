@@ -20,4 +20,4 @@ const likeSchema = new Schema(
 // Prevent a user from liking the same post more than once
 likeSchema.index({ postId: 1, userId: 1 }, { unique: true });
 
-export const Like = mongoose.model("Like", likeSchema);
+export const Like = mongoose.model("Like", likeSchema); 

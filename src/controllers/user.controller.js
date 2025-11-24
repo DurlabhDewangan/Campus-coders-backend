@@ -87,9 +87,24 @@ export const registerUser = asyncHandler(async (req, res) => {
     { new: true },
   );
 
+    const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
+    user._id,
+  );
+
+    const options = {
+    httpOnly: true,
+    secure: true,
+  };
+
+
+
+
   return res
     .status(201)
+    .cookie( "accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken ,options)
     .json(new ApiResponse(200, createdUser, "user registered successfully"));
+
 });
 
 export const loginUser = asyncHandler(async (req, res) => {
@@ -159,11 +174,10 @@ export const setAvatar = asyncHandler(async(req, res)=> {
 
    // check if a file was uploaded
   const avatarLocalPath = req.files?.avatar?.[0]?.path;
-  console.log("this is the req.files", req.files)
-  console.log("this is the req.files.avatar", req.files.avatar)
+
 
   let uploadedAvatarUrl =
-    "https://image.winudf.com/v2/image1/Y29tLm1pbmlhcmthbm8uZGVmYXVsdHBmcF9zY3JlZW5fM18xNjgzNzc5MDE1XzAxMQ/screen-3.jpg?fakeurl=1&type=.jpg"; // default avatar
+    "http://res.cloudinary.com/dr6yn8cgn/image/upload/v1763871496/etjnhzbgfgtcqccv0uxm.jpg"; // default avatar
 
   // If avatar is uploaded → upload to Cloudinary
   if (avatarLocalPath) {
@@ -185,7 +199,6 @@ export const setAvatar = asyncHandler(async(req, res)=> {
     .status(200)
     .json(new ApiResponse(200, updatedUser, "ProfilePic setup completed"));
 });
-
 
 export const profileManagement = asyncHandler(async (req, res) => {
                                                                                                        //check if user is logged in or not
@@ -240,12 +253,18 @@ export const profileManagement = asyncHandler(async (req, res) => {
 
 export const getMyProfile = asyncHandler(async(req, res) => {
  const user = req.admin;
- const myProfile = await User.findById(user._id).select("-password -refreshToken")
+ const myProfile = await User.findById(user._id).select("-password -refreshToken ")
  if(!myProfile){
   throw new ApiError(400, "user not found")
  }
+
+
  res.status(200).json(
-  new ApiResponse(200, myProfile, "profile fetched succesfully"
+  new ApiResponse(200, { 
+    ...myProfile.toObject(), 
+     followersCount: myProfile.followers.length,
+     followingCount: myProfile.following.length }, 
+     "profile fetched succesfully"
  ))
 })
 
@@ -262,11 +281,12 @@ export const getUserProfile = asyncHandler(async(req, res) => {
   }
 
   res.status(200).json(
-    new ApiResponse(200, userProfile, "user profile fetched successfully")
+    new ApiResponse(200, {...userProfile.toObject(),
+    followersCount: userProfile.followers.length,
+    followingCount: userProfile.following.length}, "user profile fetched successfully")
   )
   
 })
-
 
  export const isFollowing = asyncHandler(async (req, res) => {
   const myId = req.admin._id; 
@@ -290,7 +310,6 @@ export const getUserProfile = asyncHandler(async(req, res) => {
     )
   );
 });
-
 
 export const followUser = asyncHandler(async(req, res) => {
   //user profile-username
@@ -331,6 +350,7 @@ export const followUser = asyncHandler(async(req, res) => {
 
 
 })
+
 export const unfollowUser = asyncHandler(async(req, res) => {
   //user profile-username
   //req.admin-follower(my account)
@@ -370,6 +390,48 @@ export const unfollowUser = asyncHandler(async(req, res) => {
 
 
 })
+
+export const getFollowers = asyncHandler(async(req, res) => {
+   const { username } = req.params
+
+   const existedUser = await User.findOne({username:username}).populate(
+    "followers", "avatar fullName username"
+   );
+
+   if(!existedUser){
+   throw new ApiError(404, "user not found")
+   }
+
+
+   res.status(200).json(
+    new ApiResponse(200, existedUser.followers , "followers fetched successfully")
+   )
+
+
+})
+
+export const getFollowing = asyncHandler(async(req, res) => {
+   const { username } = req.params
+
+   const existedUser = await User.findOne({username:username}).populate(
+    "following", "avatar fullName username"
+   );
+
+   if(!existedUser){
+   throw new ApiError(404, "user not found")
+   }
+
+
+   res.status(200).json(
+    new ApiResponse(200, existedUser.following , "following fetched successfully")
+   )
+
+
+})
+
+
+
+
   
 
 
