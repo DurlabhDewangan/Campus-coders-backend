@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { loginUser, registerUser, profileManagement, setAvatar, getMyProfile, getUserProfile, isFollowing, unfollowUser, followUser, getFollowers, getFollowing, refreshAccessToken } from "../controllers/user.controller.js";
+import { loginUser, registerUser, profileManagement, setAvatar, getMyProfile, getUserProfile, isFollowing, unfollowUser, followUser, getFollowers, getFollowing, refreshAccessToken, getMyFollowing, getMyFollowers } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { logout } from "../controllers/admin.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js"
@@ -22,6 +22,8 @@ router.route("/follow/:username").get(verifyJWT,followUser)
 router.route("/unfollow/:username").get(verifyJWT,unfollowUser)
 router.route("/getfollowers/:username").get(verifyJWT,getFollowers)
 router.route("/getfollowing/:username").get(verifyJWT,getFollowing)
+router.route("/getMyFollowing").get(verifyJWT,getMyFollowing)
+router.route("/getMyFollowers").get(verifyJWT,getMyFollowers)
 router.route("/refreshAcesstoken").get(verifyJWT,refreshAccessToken)
 router.route("/logout").post(logout)
 

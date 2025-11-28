@@ -11,47 +11,35 @@ export const createPost = asyncHandler(async (req, res) => {
   const myId = req.admin._id;
 
   const user = await User.findById(myId).select("-password -refreshToken");
-
-  if (!user) {
-    throw new ApiError(400, "unauthorized request");
-  }
+  if (!user) throw new ApiError(400, "Unauthorized request");
 
   const { caption } = req.body;
-  if (!caption || caption.trim() === "") {
-    throw new ApiError(400, "Caption is required");
-  }
+  if (!caption?.trim()) throw new ApiError(400, "Caption is required");
 
-  const mediaLocalPath = req.files?.media || [];
+  const mediaFiles = req.files?.media || [];
+  if (mediaFiles.length === 0) throw new ApiError(400, "At least one media file required");
 
-  if (mediaLocalPath.length === 0) {
-    throw new ApiError(400, "At least one media file required");
-  }
+  const uploadedMedia = [];
 
-  const uploadedMediaURLs = [];
+  for (const file of mediaFiles) {
+    const result = await uploadOnCloudinary(file.path);
+    if (!result?.url) throw new ApiError(500, "Cloudinary upload failed");
 
-  for (const file of mediaLocalPath) {
-    const mediaFile = await uploadOnCloudinary(file.path);
-    if (!mediaFile || !mediaFile.url) {
-      throw new ApiError(
-        500,
-        "something went wrong while uploding media to cloudinary",
-      );
-    }
-    uploadedMediaURLs.push({mediaURL:mediaFile.url, public_id: mediaFile.public_id});
-  }
-
-  if (uploadedMediaURLs.length === 0) {
-    throw new ApiError(500, "Failed to upload images");
+    uploadedMedia.push({
+      mediaURL: result.url,
+      public_id: result.public_id
+    });
   }
 
   const newPost = await Post.create({
     userId: myId,
-    caption: caption,
-    media: uploadedMediaURLs, // array of url
+    caption,
+    media: uploadedMedia
   });
 
-  res.status(201).json(new ApiResponse(201, newPost, "new post created"));
+  res.status(201).json(new ApiResponse(201, newPost, "New post created"));
 });
+
 
 export const getMyPost = asyncHandler(async (req, res) => {
   const myId = req.admin._id;
@@ -334,6 +322,51 @@ export const getSinglePost = asyncHandler(async (req, res) => {
   res
     .status(200)
     .json(new ApiResponse(200, post, "post detail fetched successfully"));
+});
+
+export const getFeed = asyncHandler(async (req, res) => {
+  const userId = req.admin._id;
+  const limit = 10; // how many posts per request
+
+  const { cursor } = req.query;
+  let query = {};
+
+  if (cursor) {
+    query = { _id: { $lt: cursor } }; // only return posts older than last one
+  }
+
+  const posts = await Post.find(query)
+    .sort({ _id: -1 })
+    .limit(limit)
+    .populate("userId", "username avatar fullName");
+
+  const formatted = await Promise.all(
+    posts.map(async (post) => {
+      const liked = await Like.exists({ userId, postId: post._id });
+
+      return {
+        _id: post._id,
+        user: post.userId,
+        caption: post.caption,
+        media: post.media,
+        likedByUser: Boolean(liked),
+        likesCount: post.likesCount,
+        commentsCount: post.commentsCount,
+        createdAt: post.createdAt,
+      };
+    })
+  );
+
+  // Find next cursor
+ const nextCursor = posts.length > 0 ? posts[posts.length - 1]._id : null;
+
+  res.status(200).json(
+    new ApiResponse(200, {
+      posts: formatted,
+      nextCursor
+    },
+    "Feed fetched")
+  );
 });
 
 

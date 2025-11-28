@@ -13,11 +13,11 @@ const postSchema = new Schema(
       default: ""
     },
 
-    // Multiple photos supported (carousel)
+    // store both URL and public_id for each image
     media: [
       {
-        type: String, // store image URLs
-        required: true
+        mediaURL: { type: String, required: true },
+        public_id: { type: String, required: true }
       }
     ],
 
@@ -31,9 +31,8 @@ const postSchema = new Schema(
       default: 0
     }
   },
-  {
-    timestamps: true 
-  }
+  { timestamps: true }
 );
+
 
 export const Post = mongoose.model("Post", postSchema);

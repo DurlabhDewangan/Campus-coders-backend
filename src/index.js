@@ -2,6 +2,7 @@ import dotenv from "dotenv"
 import connectDB from "./db/index.js";
 import { app } from "./app.js";
 
+
 dotenv.config({
     path:'./.env'
 })
@@ -11,6 +12,7 @@ console.log(PORT)
 
 connectDB()
 .then(() =>   {
+
     app.on("error", (error) => {
         console.log("🔥 SERVER ERROR CAUGHT 🔥");
         console.log(error.message);

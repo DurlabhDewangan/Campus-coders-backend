@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { comment, createPost, deleteComment, deletePost, getAllComment, getAllPosts, getMyPost, getSinglePost, getUserPost, postLike, postUnlike } from "../controllers/post.controller.js";
+import { comment, createPost, deleteComment, deletePost, getAllComment, getAllPosts, getFeed, getMyPost, getSinglePost, getUserPost, postLike, postUnlike } from "../controllers/post.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { upload } from "../middlewares/multer.middleware.js";
 
@@ -18,5 +18,6 @@ postRouter.route("/postUnlike/:postId").get(verifyJWT, postUnlike)
 postRouter.route("/comment/:postId").post(verifyJWT, comment)
 postRouter.route("/getAllComments/:postId").get(verifyJWT, getAllComment)
 postRouter.route("/getSinglePost/:postId").get(verifyJWT, getSinglePost)
+postRouter.route("/getfeed").get(verifyJWT, getFeed)
 postRouter.route("/deleteComment/:commentId").delete(verifyJWT, deleteComment)
 postRouter.route("/deletePost/:postId").delete(verifyJWT, deletePost)
