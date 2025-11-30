@@ -70,15 +70,34 @@ export const getUserPost = asyncHandler(async (req, res) => {
 });
 
 export const getAllPosts = asyncHandler(async (req, res) => {
+  const myId = req.admin._id;
+
   const posts = await Post.find({})
     .sort({ createdAt: -1 })
-    .populate("userId", "username avatar fullname");
-  // populate means include user data
+    .populate("userId", "username avatar fullName");
 
-  res
-    .status(200)
-    .json(new ApiResponse(200, posts, "All posts fetched successfully"));
+  const finalPosts = await Promise.all(
+    posts.map(async (post) => {
+      const isLiked = await Like.exists({ postId: post._id, userId: myId });
+
+      return {
+        _id: post._id,
+        user: post.userId,
+        caption: post.caption,
+        media: post.media,
+        isLiked: Boolean(isLiked),
+        likesCount: post.likesCount,
+        commentsCount: post.commentsCount,
+        createdAt: post.createdAt,
+      };
+    })
+  );
+
+  res.status(200).json(
+    new ApiResponse(200, finalPosts, "All posts fetched successfully")
+  );
 });
+
 
 export const deletePost = asyncHandler(async( req, res)=> {
   const { postId }  = req.params;
@@ -115,22 +134,14 @@ if (!isPostOwner && !isAdmin) {
 })
 
 export const postLike = asyncHandler(async (req, res) => {
-  //userid, who gonna like
-  // post id, which post getting like
-  //check if myid has value
-  //check if post exist
-  //if already liked
-  //create like document
-  //likecount in post model +1
-  //res
   const myId = req.admin._id;
+  const { postId } = req.params;
 
   if (!myId) {
     throw new ApiError(400, "unauthorized request");
   }
 
-  const { postId } = req.params;
-  const post = await Post.findById(postId);
+  const post = await Post.findById(postId).populate("userId");
 
   if (!post) {
     throw new ApiError(404, "post not found");
@@ -150,15 +161,23 @@ export const postLike = asyncHandler(async (req, res) => {
   post.likesCount += 1;
   await post.save();
 
-  res
-    .status(200)
-    .json(
-      new ApiResponse(
-        200,
-        { likesCount: post.likesCount },
-        "post liked successfully",
-      ),
-    );
+  // Create notification for post owner
+  if (post.userId._id.toString() !== myId.toString()) {
+    await createNotification({
+      recipient: post.userId._id,
+      sender: myId,
+      type: "like",
+      post: postId
+    });
+  }
+
+  res.status(200).json(
+    new ApiResponse(
+      200,
+      { likesCount: post.likesCount },
+      "post liked successfully",
+    ),
+  );
 });
 
 export const postUnlike = asyncHandler(async (req, res) => {
@@ -201,14 +220,13 @@ export const postUnlike = asyncHandler(async (req, res) => {
 
 export const comment = asyncHandler(async (req, res) => {
   const myId = req.admin._id;
+  const { postId } = req.params;
 
   if (!myId) {
     throw new ApiError(400, "Unauthorized request");
   }
 
-  const { postId } = req.params;
-
-  const post = await Post.findById(postId);
+  const post = await Post.findById(postId).populate("userId");
 
   if (!post) {
     throw new ApiError(404, "post not found");
@@ -228,6 +246,17 @@ export const comment = asyncHandler(async (req, res) => {
 
   post.commentsCount += 1;
   await post.save();
+
+  // Create notification for post owner
+  if (post.userId._id.toString() !== myId.toString()) {
+    await createNotification({
+      recipient: post.userId._id,
+      sender: myId,
+      type: "comment",
+      post: postId,
+      comment: newComment._id
+    });
+  }
 
   res.status(201).json(
     new ApiResponse(
@@ -312,17 +341,35 @@ export const deleteComment = asyncHandler(async (req, res) => {
 
 export const getSinglePost = asyncHandler(async (req, res) => {
   const { postId } = req.params;
+  const myId = req.admin._id;
 
-  const post = await Post.findById(postId).populate("userId", "username fullName avatar");
+  const post = await Post.findById(postId).populate(
+    "userId",
+    "username fullName avatar"
+  );
 
   if (!post) {
     throw new ApiError(404, "post not found");
   }
 
-  res
-    .status(200)
-    .json(new ApiResponse(200, post, "post detail fetched successfully"));
+  const isLiked = await Like.exists({ postId, userId: myId });
+
+  const finalPost = {
+    _id: post._id,
+    user: post.userId,
+    caption: post.caption,
+    media: post.media,
+    isLiked: Boolean(isLiked),
+    likesCount: post.likesCount,
+    commentsCount: post.commentsCount,
+    createdAt: post.createdAt,
+  };
+
+  res.status(200).json(
+    new ApiResponse(200, finalPost, "Post detail fetched successfully")
+  );
 });
+
 
 export const getFeed = asyncHandler(async (req, res) => {
   const userId = req.admin._id;
@@ -349,7 +396,7 @@ export const getFeed = asyncHandler(async (req, res) => {
         user: post.userId,
         caption: post.caption,
         media: post.media,
-        likedByUser: Boolean(liked),
+        isLiked: Boolean(liked),
         likesCount: post.likesCount,
         commentsCount: post.commentsCount,
         createdAt: post.createdAt,

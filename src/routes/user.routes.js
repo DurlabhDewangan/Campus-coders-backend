@@ -1,8 +1,9 @@
 import { Router } from "express";
-import { loginUser, registerUser, profileManagement, setAvatar, getMyProfile, getUserProfile, isFollowing, unfollowUser, followUser, getFollowers, getFollowing, refreshAccessToken, getMyFollowing, getMyFollowers } from "../controllers/user.controller.js";
+import { loginUser, registerUser, profileManagement, setAvatar, getMyProfile, getUserProfile, isFollowing, unfollowUser, followUser, getFollowers, getFollowing, refreshAccessToken, getMyFollowing, getMyFollowers, getAllUser } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { logout } from "../controllers/admin.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js"
+import {searchUsers} from "../controllers/search.controller.js";
 
 export const router = Router()
 
@@ -17,6 +18,7 @@ router.route("/setAvatar").post(verifyJWT,
     setAvatar)
 router.route("/getMyProfile").get(verifyJWT,getMyProfile)
 router.route("/getUserProfile/:username").get(verifyJWT,getUserProfile)
+router.route("/getAllUser").get(verifyJWT,getAllUser)
 router.route("/isFollowing/:username").get(verifyJWT,isFollowing)
 router.route("/follow/:username").get(verifyJWT,followUser)
 router.route("/unfollow/:username").get(verifyJWT,unfollowUser)
@@ -27,4 +29,10 @@ router.route("/getMyFollowers").get(verifyJWT,getMyFollowers)
 router.route("/refreshAcesstoken").get(verifyJWT,refreshAccessToken)
 router.route("/logout").post(logout)
 
+
+
+
+
+// Search routes
+router.route("/search").get( searchUsers);
 

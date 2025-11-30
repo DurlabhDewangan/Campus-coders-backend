@@ -324,13 +324,8 @@ export const getUserProfile = asyncHandler(async(req, res) => {
   );
 });
 
-export const followUser = asyncHandler(async(req, res) => {
-  //user profile-username
-  //req.admin-follower(my account)
-  //hit the apiendpoint 
-  // add follower to the user's follower array 
-  // add the user's username to the followering array
-  //res 
+
+  export const followUser = asyncHandler(async(req, res) => {
   const myId = req.admin._id
   const { username } = req.params;
   
@@ -339,30 +334,24 @@ export const followUser = asyncHandler(async(req, res) => {
     throw new ApiError(404, "user not found")
   }
 
-    // prevent user from following themselves
   if (user._id.toString() === myId.toString()) {
     throw new ApiError(400, "You cannot follow yourself");
   }
 
-
   await User.findByIdAndUpdate(user._id, {
-    $addToSet:{
-       followers:myId
-    }
+    $addToSet: { followers: myId }
   })
 
-  await User.findByIdAndUpdate(myId,
-  {  $addToSet:{
-      following:user._id
-    }}
-  )
+  await User.findByIdAndUpdate(myId, {
+    $addToSet: { following: user._id }
+  })
+
 
   res.status(200).json(
     new ApiResponse(200, {}, "User followed successfully")
   )
-
-
 })
+
 
 export const unfollowUser = asyncHandler(async(req, res) => {
   //user profile-username
@@ -531,6 +520,27 @@ export const getMyFollowers = asyncHandler(async (req, res) => {
     new ApiResponse(200, existedUser.followers, "My followers fetched successfully")
   );
 });
+
+export const getAllUser = asyncHandler(async (req, res) => {
+
+
+  const currentUserId = req.admin?._id; 
+
+  const users = await User.find({
+    _id: { $ne: currentUserId } // exclude logged-in user
+  })
+  .select("-password -refreshToken")
+  .sort({ createdAt: -1 });
+
+  return res.status(200).json(
+    new ApiResponse(200, {
+      users,
+      count: users.length,
+    }, "Users fetched successfully")
+  );
+});
+
+
 
 
 
