@@ -4,7 +4,8 @@
   "description": "campus coders backend ",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon -r dotenv/config --experimental-json-modules src/index.js"
+    "dev": "nodemon -r dotenv/config --experimental-json-modules src/index.js",
+      "start": "node --experimental-json-modules src/index.js"
   },
   "type": "module",
   "keywords": [
