@@ -27,7 +27,7 @@ export const loginAdmin = asyncHandler(async (req, res) => {
   //get data from body
   //check if all field are filled - validation
   // check if username or email existed or not
-  //check passoword is correct
+  //check password is correct
   //generate tokens
   //send cookies
   //redirect to dashboard
@@ -50,7 +50,7 @@ export const loginAdmin = asyncHandler(async (req, res) => {
   }
 
   const passwordResult = await admin.isPasswordCorrect(password);
-  console.log(passwordResult);
+ 
   if (!passwordResult) {
     throw new ApiError(401, "Invalid password");
   }
@@ -63,15 +63,19 @@ export const loginAdmin = asyncHandler(async (req, res) => {
     "-password -refreshToken",
   );
 
-  const options = {
-    httpOnly: true,
-    secure: true,
-  };
+const isProduction = process.env.NODE_ENV === "production";
+
+const cookieOptions = {
+  httpOnly: true,
+  secure: isProduction,  
+  sameSite: isProduction ? "none" : "lax",
+};
+
 
   return res
     .status(200)
-    .cookie("accessToken", accessToken, options)
-    .cookie("refreshToken", refreshToken, options)
+    .cookie("accessToken", accessToken, cookieOptions)
+    .cookie("refreshToken", refreshToken, cookieOptions)
     .json(
       new ApiResponse(
         200,
@@ -98,28 +102,30 @@ export const logout = asyncHandler(async (req, res) => {
     },
   );
 
-  const options = {
-    httpOnly: true,
-    secure: true,
-  };
+const isProduction = process.env.NODE_ENV === "production";
+
+const cookieOptions = {
+  httpOnly: true,
+  secure: isProduction,  
+  sameSite: isProduction ? "none" : "lax",
+};
+
 
   return res
     .status(200)
-    .clearCookie("accessToken", options)
-    .clearCookie("refreshToken", options)
+    .clearCookie("accessToken", cookieOptions)
+    .clearCookie("refreshToken", cookieOptions)
     .json(new ApiResponse(200, {}, " logged out successfully"));
 });
 
 export const inviteCodeGenerate = asyncHandler(async (req, res) => {
   const admin = req.admin;
   if (admin.role !== "admin") {
-    throw new ApiError(400, "anthorized request");
+    throw new ApiError(400, "unauthorized request");
   }
   console.log("we are going to start generating code");
   const invitecode = generateInviteCode();
 
-  console.log(invitecode);
-  console.log("this is the code");
 
   const databaseInviteCode = await InviteCode.create({
     code: invitecode,
@@ -138,11 +144,11 @@ export const inviteCodeGenerate = asyncHandler(async (req, res) => {
   const createdCode = await InviteCode.findById(databaseInviteCode.id).populate(
     "createdBy", "fullName username",
   );
-  console.log(createdCode);
+
 
   res
     .status(200)
     .json(
-      new ApiResponse(200, createdCode, "invite code generated succesfully"),
+      new ApiResponse(200, createdCode, "invite code generated successfully"),
     );
 });

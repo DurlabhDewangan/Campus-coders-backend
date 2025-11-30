@@ -5,11 +5,13 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { InviteCode } from "../models/inviteCode.model.js";
 import { generateAccessAndRefreshToken } from "./admin.controller.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import jwt from "jsonwebtoken";
+
 
 // Both admin and user use the same logout controller
 
 export const registerUser = asyncHandler(async (req, res) => {
-  console.log("REGISTER BODY:", req.body);
+
 
                                                                                            //get user data(username,fullname,email,mobile,password,invitecode)
                                                                                            //check if there is any field missing
@@ -129,7 +131,7 @@ export const loginUser = asyncHandler(async (req, res) => {
   const { username, email, password } = req.body;
 
   if ((!username && !email) || !password) {
-    throw new ApiError(400, "username or email and passowrd required");
+    throw new ApiError(400, "username or email and password required");
   }
 
   const user = await User.findOne({
@@ -176,7 +178,7 @@ export const loginUser = asyncHandler(async (req, res) => {
 
 export const setAvatar = asyncHandler(async(req, res)=> {
   const user = req.admin;
-  console.log("---- SET AVATAR HIT ----");
+
    const confirmedUser = await User.findById(user._id);
 
   if (!confirmedUser) {
@@ -185,7 +187,7 @@ export const setAvatar = asyncHandler(async(req, res)=> {
 
    // check if a file was uploaded
   const avatarLocalPath = req.files?.avatar?.[0]?.path;
-  console.log("req.files:", req.files);
+
 
   let uploadedAvatarUrl =
     "http://res.cloudinary.com/dr6yn8cgn/image/upload/v1763871496/etjnhzbgfgtcqccv0uxm.jpg"; // default avatar
@@ -205,7 +207,7 @@ export const setAvatar = asyncHandler(async(req, res)=> {
     },
     { new: true },
   ).select("-password -refreshToken")
-    console.log("---- SET AVATAR done ----");
+   
   res
     .status(200)
     .json(new ApiResponse(200, updatedUser, "ProfilePic setup completed"));
@@ -221,8 +223,7 @@ export const profileManagement = asyncHandler(async (req, res) => {
                                                                                                        //setup gender
                                                                                                        //complete setup tick true to profile completed
   const user = req.admin;
-  console.log("this is started profile management")
-  console.log("req.admin:", req.admin);
+ 
   if (!user) {
     throw new ApiError(400, "unauthorized request");
   }
@@ -258,7 +259,7 @@ export const profileManagement = asyncHandler(async (req, res) => {
     },
     { new: true },
   ).select("-password -refreshToken")
-console.log("profile management over")
+
   res
     .status(200)
     .json(new ApiResponse(200, updatedUser, "Profile setup completed"));
@@ -277,7 +278,7 @@ export const getMyProfile = asyncHandler(async(req, res) => {
     ...myProfile.toObject(), 
      followersCount: myProfile.followers.length,
      followingCount: myProfile.following.length }, 
-     "profile fetched succesfully"
+     "profile fetched successfully"
  ))
 })
 
@@ -455,12 +456,17 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
             
         }
     
-        const options = {
-            httpOnly: true,
-            secure: true
-        }
+    const isProduction = process.env.NODE_ENV === "production";
+
+const cookieOptions = {
+  httpOnly: true,
+  secure: isProduction,
+  sameSite: isProduction ? "none" : "lax",
+  path: "/",
+};
+
     
-        const {accessToken, newRefreshToken} = await generateAccessAndRefereshTokens(user._id)
+        const {accessToken, newRefreshToken} = await generateAccessAndRefreshToken(user._id)
     
         return res
         .status(200)

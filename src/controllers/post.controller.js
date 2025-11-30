@@ -128,7 +128,7 @@ if (!isPostOwner && !isAdmin) {
   await Post.findByIdAndDelete(postId)
 
   res.status(200).json(
-    new ApiResponse(200, {}, "User Post deleted succesfully")
+    new ApiResponse(200, {}, "User Post deleted successfully")
   )
   
 })
@@ -161,15 +161,7 @@ export const postLike = asyncHandler(async (req, res) => {
   post.likesCount += 1;
   await post.save();
 
-  // Create notification for post owner
-  if (post.userId._id.toString() !== myId.toString()) {
-    await createNotification({
-      recipient: post.userId._id,
-      sender: myId,
-      type: "like",
-      post: postId
-    });
-  }
+
 
   res.status(200).json(
     new ApiResponse(
@@ -247,16 +239,7 @@ export const comment = asyncHandler(async (req, res) => {
   post.commentsCount += 1;
   await post.save();
 
-  // Create notification for post owner
-  if (post.userId._id.toString() !== myId.toString()) {
-    await createNotification({
-      recipient: post.userId._id,
-      sender: myId,
-      type: "comment",
-      post: postId,
-      comment: newComment._id
-    });
-  }
+
 
   res.status(201).json(
     new ApiResponse(
@@ -318,7 +301,7 @@ export const deleteComment = asyncHandler(async (req, res) => {
   const isAdmin = myRole === "admin";
 
   if (!postOwner && !CommentOwner && !isAdmin) {
-    throw new ApiError(403, "Unathorized request");
+    throw new ApiError(403, "Unauthorized request");
   }
 
   await Comment.deleteOne({ _id: commentId });
@@ -383,7 +366,7 @@ export const getFeed = asyncHandler(async (req, res) => {
   }
 
   const posts = await Post.find(query)
-    .sort({ _id: -1 })
+    .sort({ createdAt: -1 })
     .limit(limit)
     .populate("userId", "username avatar fullName");
 

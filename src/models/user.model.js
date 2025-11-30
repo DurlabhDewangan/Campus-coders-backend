@@ -69,12 +69,12 @@ const userSchema = new Schema(
 
     course: {
       type: String,
-      enum: ["BCA", "BSc IT", "BSc CS", "PGDCA"],
+      enum: ["BCA", "BSc IT", "BSc CS", "PGDCA", "MCA", "BSc" , "BA", "Bcom"],
     },
 
     year: {
       type: String,
-      enum: ["1st Year", "2nd Year", "3rd Year"],
+      enum: ["1st Year", "2nd Year", "3rd Year", "4th Year"],
     },
 
     gender: {
