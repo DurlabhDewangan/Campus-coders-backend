@@ -120,13 +120,6 @@ const cookieOptions = {
 });
 
 export const loginUser = asyncHandler(async (req, res) => {
-                                                                                 //get data from body
-                                                                                 //check if all field are filled - validation
-                                                                                 // check if username or email existed or not
-                                                                                 //check passoword is correct
-                                                                                 //generate tokens
-                                                                                 //send cookies
-                                                                                 //redirect to dashboard
 
   const { username, email, password } = req.body;
 
@@ -156,9 +149,13 @@ export const loginUser = asyncHandler(async (req, res) => {
     "-password -refreshToken",
   );
 
+  const isProduction = process.env.NODE_ENV === "production";
+
   const options = {
     httpOnly: true,
-    secure: true,
+    secure: isProduction,
+    sameSite: "none",
+    path: "/",
   };
 
   return res
@@ -470,8 +467,8 @@ const cookieOptions = {
     
         return res
         .status(200)
-        .cookie("accessToken", accessToken, options)
-        .cookie("refreshToken", newRefreshToken, options)
+        .cookie("accessToken", accessToken, cookieOptions)
+        .cookie("refreshToken", newRefreshToken, cookieOptions)
         .json(
             new ApiResponse(
                 200, 
