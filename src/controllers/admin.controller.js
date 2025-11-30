@@ -63,12 +63,14 @@ export const loginAdmin = asyncHandler(async (req, res) => {
     "-password -refreshToken",
   );
 
+  
 const isProduction = process.env.NODE_ENV === "production";
 
 const cookieOptions = {
   httpOnly: true,
-  secure: isProduction,  
-  sameSite: isProduction ? "none" : "lax",
+  secure: isProduction,   // MUST be true in production
+  sameSite: "none",       // ALWAYS none because you use cross-domain
+  path: "/",
 };
 
 
@@ -106,8 +108,9 @@ const isProduction = process.env.NODE_ENV === "production";
 
 const cookieOptions = {
   httpOnly: true,
-  secure: isProduction,  
-  sameSite: isProduction ? "none" : "lax",
+  secure: isProduction,   // MUST be true in production
+  sameSite: "none",       // ALWAYS none because you use cross-domain
+  path: "/",
 };
 
 

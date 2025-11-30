@@ -99,14 +99,14 @@ export const registerUser = asyncHandler(async (req, res) => {
     const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
     user._id,
   );
-
+  
 const isProduction = process.env.NODE_ENV === "production";
 
 const cookieOptions = {
   httpOnly: true,
-  secure: isProduction,   // false on localhost
-  sameSite: isProduction ? "none" : "lax", // lax works locally
-  path: "/"
+  secure: isProduction,   // MUST be true in production
+  sameSite: "none",       // ALWAYS none because you use cross-domain
+  path: "/",
 };
 
 
@@ -455,13 +455,13 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
             throw new ApiError(401, "Refresh token is expired or used")
             
         }
-    
-    const isProduction = process.env.NODE_ENV === "production";
+  
+const isProduction = process.env.NODE_ENV === "production";
 
 const cookieOptions = {
   httpOnly: true,
-  secure: isProduction,
-  sameSite: isProduction ? "none" : "lax",
+  secure: isProduction,   // MUST be true in production
+  sameSite: "none",       // ALWAYS none because you use cross-domain
   path: "/",
 };
 
