@@ -8,11 +8,21 @@ import cookieParser from "cookie-parser";
 const app = express()
 
 
+const allowedOrigins = process.env.CORS_ORIGIN.split(",");
+
 app.use(cors({
-  origin: process.env.CORS_ORIGIN, 
+  origin: function (origin, callback) {
+    console.log("Request from:", origin);
+
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("❌ CORS blocked for origin: " + origin));
+    }
+  },
   credentials: true,
-   methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization", "Cache-Control", "X-Requested-With"],
 }));
 
 
